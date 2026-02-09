@@ -1,4 +1,5 @@
-#enumerate with list
+#enumerate with list values
+# enumerate() is a built
 fruits = ["orange", "Cherry", "Kiwi"]
 for index, fruits in enumerate(fruits):
     print(index, fruits)

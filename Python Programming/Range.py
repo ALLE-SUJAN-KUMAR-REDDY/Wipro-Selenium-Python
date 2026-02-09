@@ -1,3 +1,12 @@
+# all numbers should be integers
+# step size cannot be zero
+# start - default 0
+# stop ending number which is not included
+# increment / decrement - default 1
+
+# range does not create a list , it creates a object [memory efficiency]
+
+
 a = range(0,5)
 print(a[1])
 print(a[3])
