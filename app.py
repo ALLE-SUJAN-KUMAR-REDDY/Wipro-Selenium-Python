@@ -1,64 +1,123 @@
-# flask - python web fw  - web apps , rest apis and microservices
-from flask import Flask
-from flask import Flask, jsonify, request
+from flask import Flask, request, jsonify
 
-# creates a flask object
 app = Flask(__name__)
 
+# In-memory storage
+customers = {}
+current_id = 1
 
-@app.route("/")
+
+# -------------------------
+# HOME (Health Check)
+# -------------------------
+@app.route("/", methods=["GET"])
 def home():
-    return "Welcome to Flask web server!"
+    return "Banking Customer API is running", 200
 
 
-# get method end point
-@app.route('/users', methods=['GET'])
-def get_users():
-    return jsonify({"users": ["Alice", "Bob", "Charlie"]})
-
-
-# post method end point
-@app.route('/users', methods=['POST'])
-def add_users():
+# -------------------------
+# POST – Create Customer
+# -------------------------
+@app.route("/customers", methods=["POST"])
+def create_customer():
+    global current_id
     data = request.get_json()
-    return jsonify(data), 201
+
+    if not data or "name" not in data or "email" not in data:
+        return jsonify({"error": "Invalid request body"}), 400
+
+    customer = {
+        "id": current_id,
+        "name": data["name"],
+        "email": data["email"],
+        "balance": data.get("balance", 0)
+    }
+
+    customers[current_id] = customer
+    current_id += 1
+
+    return jsonify(customer), 201
 
 
-# put request
-@app.route('/users/<int:id>', methods=['PUT'])
-def update_users(id):
-    return jsonify({"Message": f"user {id} is updated"})
+# -------------------------
+# GET – Retrieve Customer by ID
+# -------------------------
+@app.route("/customers/<int:customer_id>", methods=["GET"])
+def get_customer(customer_id):
+    customer = customers.get(customer_id)
+    if not customer:
+        return jsonify({"error": "Customer not found"}), 404
+
+    return jsonify(customer), 200
 
 
-@app.route('/users/<int:id>', methods=['DELETE'])
-def delete_user(id):
-    return jsonify({"message": f"User {id} deleted"})
+# -------------------------
+# GET – Retrieve ALL Customers
+# -------------------------
+@app.route("/customers", methods=["GET"])
+def get_all_customers():
+    return jsonify(list(customers.values())), 200
 
 
-@app.route('/users/<int:id>', methods=['PATCH'])
-def patch_user(id):
+# -------------------------
+# PUT – Update Customer
+# -------------------------
+@app.route("/customers/<int:customer_id>", methods=["PUT"])
+def update_customer(customer_id):
+    customer = customers.get(customer_id)
+    if not customer:
+        return jsonify({"error": "Customer not found"}), 404
+
     data = request.get_json()
-    return jsonify({
-        "message": "User updated partially",
-        "user_id": id,
-        "updated_fields": data
-    })
+
+    customer["name"] = data.get("name", customer["name"])
+    customer["email"] = data.get("email", customer["email"])
+    customer["balance"] = data.get("balance", customer["balance"])
+
+    return jsonify(customer), 200
 
 
-#  run the below  code only if this file is executed directly and not when imported
+# -------------------------
+# DELETE – Remove Customer
+# -------------------------
+@app.route("/customers/<int:customer_id>", methods=["DELETE"])
+def delete_customer(customer_id):
+    if customer_id not in customers:
+        return jsonify({"error": "Customer not found"}), 404
+
+    del customers[customer_id]
+    return "", 204
+
+
+# -------------------------
+# POST – Bulk Create Customers (OPTIONAL)
+# -------------------------
+@app.route("/customers/bulk", methods=["POST"])
+def create_customers_bulk():
+    global current_id
+    data = request.get_json()
+
+    if not isinstance(data, list):
+        return jsonify({"error": "Expected a list of customers"}), 400
+
+    created_customers = []
+
+    for item in data:
+        customer = {
+            "id": current_id,
+            "name": item["name"],
+            "email": item["email"],
+            "balance": item.get("balance", 0)
+        }
+        customers[current_id] = customer
+        created_customers.append(customer)
+        current_id += 1
+
+    return jsonify(created_customers), 201
+
+
+# -------------------------
+# RUN APPLICATION
+# -------------------------
 if __name__ == "__main__":
     app.run(debug=True)
-# run the local server - 127.0.0.1 or localhost:5000
-# enable the debugging  mode
-
-
-
-
-
-
-
-
-
-
-
-
